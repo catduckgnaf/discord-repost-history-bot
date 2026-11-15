@@ -1,4 +1,4 @@
-"""Prikazy pro spravu zivych propojeni kanalu (source -> target)."""
+"""Commands for managing live channel links (source -> target)."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -21,11 +21,11 @@ class LinkingCog(commands.Cog):
 
     @app_commands.command(
         name="link-add",
-        description="Zapne zive prepositlani novych zprav ze zdrojoveho kanalu do ciloveho.",
+        description="Start live forwarding of new messages from a source channel to a target channel.",
     )
     @app_commands.describe(
-        source="Zdrojovy kanal (na tomto serveru), odkud se maji zpravy prepositlat.",
-        target_channel_id="ID ciloveho kanalu (muze byt i na jinem serveru, kde je bot clenem).",
+        source="Source channel (on this server) to forward new messages from.",
+        target_channel_id="Target channel ID (can be on another server where the bot is a member).",
     )
     @app_commands.checks.has_permissions(manage_guild=True)
     async def link_add(
@@ -37,13 +37,13 @@ class LinkingCog(commands.Cog):
         try:
             target_id = int(target_channel_id.strip())
         except ValueError:
-            await interaction.response.send_message("ID ciloveho kanalu musi byt cislo.", ephemeral=True)
+            await interaction.response.send_message("The target channel ID must be a number.", ephemeral=True)
             return
 
         target = self._resolve_channel(target_id)
         if target is None:
             await interaction.response.send_message(
-                "Cilovy kanal nenalezen - bot v nem musi byt clenem serveru a mit pravo Manage Webhooks.",
+                "Target channel not found - the bot must be a member of that server and have the Manage Webhooks permission.",
                 ephemeral=True,
             )
             return
@@ -56,29 +56,31 @@ class LinkingCog(commands.Cog):
             created_by=interaction.user.id,
         )
         await interaction.response.send_message(
-            f"Propojeni **{link.id}** vytvoreno: {source.mention} ({source.guild.name}) "
-            f"-> #{target.name} ({target.guild.name}). Nove zpravy se budou prepositlat automaticky.",
+            f"Link **{link.id}** created: {source.mention} ({source.guild.name}) "
+            f"-> #{target.name} ({target.guild.name}). Only new messages posted from now on will be forwarded; "
+            f"existing history is not copied.",
         )
 
     @app_commands.command(
         name="link-remove",
-        description="Vypne zive prepositlani ze zadaneho zdrojoveho kanalu.",
+        description="Stop live forwarding from the given source channel.",
     )
+    @app_commands.describe(source="Source channel to stop forwarding from.")
     @app_commands.checks.has_permissions(manage_guild=True)
     async def link_remove(self, interaction: discord.Interaction, source: discord.TextChannel) -> None:
         removed = await self.bot.link_storage.remove_link(source.id)
         if removed:
-            await interaction.response.send_message(f"Propojeni ze {source.mention} zruseno.")
+            await interaction.response.send_message(f"Link from {source.mention} removed.")
         else:
             await interaction.response.send_message(
-                f"Pro {source.mention} zadne propojeni neexistuje.", ephemeral=True
+                f"No link exists for {source.mention}.", ephemeral=True
             )
 
-    @app_commands.command(name="link-list", description="Vypise aktivni propojeni kanalu pro tento server.")
+    @app_commands.command(name="link-list", description="List the active channel links for this server.")
     async def link_list(self, interaction: discord.Interaction) -> None:
         links = self.bot.link_storage.links_for_guild(interaction.guild_id)
         if not links:
-            await interaction.response.send_message("Zadna propojeni nejsou aktivni.", ephemeral=True)
+            await interaction.response.send_message("No links are active.", ephemeral=True)
             return
 
         lines = []
@@ -89,14 +91,14 @@ class LinkingCog(commands.Cog):
             target_name = f"#{target.name}" if target else f"#{link.target_channel_id}"
             lines.append(f"`{link.id}` {source_name} -> {target_name}")
 
-        await interaction.response.send_message("**Aktivni propojeni:**\n" + "\n".join(lines))
+        await interaction.response.send_message("**Active links:**\n" + "\n".join(lines))
 
     @link_add.error
     @link_remove.error
     async def on_permission_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
         if isinstance(error, app_commands.MissingPermissions):
             await interaction.response.send_message(
-                "K tomuto prikazu potrebujes opravneni **Manage Guild**.", ephemeral=True
+                "You need the **Manage Guild** permission to use this command.", ephemeral=True
             )
         else:
             raise error
