@@ -227,3 +227,69 @@ Channel ID"). The bot must be a member of the target server with the
 - For large channels (thousands of messages), `/repost-history` can take a
   while to finish due to the delay between messages (protection against
   Discord rate limits).
+
+---
+
+## 8. Running with Docker
+
+A prebuilt image is published to the GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/catduckgnaf/discord-repost-history-bot:latest
+```
+
+The image is built for `linux/amd64` and `linux/arm64`. It has no Web UI
+and opens no ports.
+
+### Setup
+
+1. Create the application and bot in the Discord Developer Portal and
+   finish the Discord setup in section 6 above: copy the Bot Token,
+   enable **MESSAGE CONTENT INTENT**, and invite the bot to **both** the
+   source and target servers with the scopes `bot` and
+   `applications.commands` and the permissions Send Messages, Manage
+   Webhooks, Read Message History, View Channels, Attach Files, and
+   Embed Links.
+2. Prepare the data folder. The container runs as UID/GID 1000, so the
+   folder must be owned by that user:
+
+   ```bash
+   mkdir -p data
+   chown -R 1000:1000 data
+   ```
+
+   On Unraid the equivalent is:
+
+   ```bash
+   chown -R 1000:1000 /mnt/user/appdata/discord-repost-history-bot
+   ```
+
+3. Run the container, passing the token as an environment variable:
+
+   ```bash
+   docker run -d \
+     --name discord-repost-history-bot \
+     --restart unless-stopped \
+     -e DISCORD_TOKEN=your-bot-token \
+     -v "$PWD/data:/app/data" \
+     ghcr.io/catduckgnaf/discord-repost-history-bot:latest
+   ```
+
+   Or use the included `docker-compose.yml`: put `DISCORD_TOKEN` (and
+   optionally `DEV_GUILD_ID`) in a `.env` file next to it, then run
+   `docker compose up -d`.
+
+### Configuration
+
+| Variable | Required | Description |
+|---|---|---|
+| `DISCORD_TOKEN` | Yes | Bot token from the Discord Developer Portal. The container exits immediately if this is empty. |
+| `DEV_GUILD_ID` | No | When set, slash commands sync instantly to just this server. Leave empty for global sync (can take up to about an hour). |
+| `TZ` | No | Container timezone, used for log timestamps. |
+
+Channel links are stored in `/app/data/links.json` inside the mounted
+folder and survive restarts. Running repost jobs are kept in memory only
+and do not resume after a restart.
+
+An Unraid Community Apps template for this image is available in
+[catduck's Unraid templates](https://github.com/catduckgnaf/catduck-unraid-templates).

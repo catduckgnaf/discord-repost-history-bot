@@ -1,0 +1,16 @@
+services:
+  discord-repost-history-bot:
+    image: ghcr.io/catduckgnaf/discord-repost-history-bot:latest
+    container_name: discord-repost-history-bot
+    restart: unless-stopped
+    environment:
+      # Required. The container exits immediately if this is empty.
+      DISCORD_TOKEN: "${DISCORD_TOKEN:-}"
+      # Optional. When set, slash commands sync instantly to just this
+      # server. Leave empty for global sync (can take up to about an hour).
+      DEV_GUILD_ID: "${DEV_GUILD_ID:-}"
+      TZ: "${TZ:-America/New_York}"
+    volumes:
+      # Stores data/links.json (channel links). Must be writable by
+      # UID/GID 1000, which the container runs as.
+      - ./data:/app/data
