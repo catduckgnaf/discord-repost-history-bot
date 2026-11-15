@@ -1,4 +1,4 @@
-"""Jednoducha JSON perzistence pro propojeni kanalu (linky)."""
+"""Simple JSON persistence for channel links."""
 from __future__ import annotations
 
 import asyncio
@@ -24,7 +24,7 @@ class ChannelLink:
 
 
 class LinkStorage:
-    """Drzi seznam propojeni 'zdrojovy kanal -> cilovy kanal' pro zivy repost."""
+    """Holds the 'source channel -> target channel' links used for live forwarding."""
 
     def __init__(self, path: Path = LINKS_FILE) -> None:
         self._path = path

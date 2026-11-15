@@ -1,4 +1,4 @@
-"""Prikaz pro hromadne odeslani jedne zpravy (i s prilohou) do vice kanalu najednou."""
+"""Command for sending one message (optionally with an attachment) to many channels at once."""
 from __future__ import annotations
 
 import asyncio
@@ -32,12 +32,12 @@ class BroadcastCog(commands.Cog):
 
     @app_commands.command(
         name="broadcast",
-        description="Odesle stejnou hromadnou zpravu (volitelne s prilohou) do vice kanalu najednou.",
+        description="Send the same message (optionally with an attachment) to several channels at once.",
     )
     @app_commands.describe(
-        message="Text zpravy, ktery se odesle do vsech vybranych kanalu.",
-        channel_ids="Seznam ID kanalu oddelenych carkou (napr. 123,456,789), nebo zminky #kanal.",
-        attachment="Volitelna priloha (foto/video/soubor), ktera se prida ke kazde zprave.",
+        message="Message text to send to every selected channel.",
+        channel_ids="Comma-separated channel IDs (e.g. 123,456,789) or #channel mentions.",
+        attachment="Optional attachment (photo/video/file) added to every message.",
     )
     @app_commands.checks.has_permissions(manage_guild=True)
     async def broadcast(
@@ -49,7 +49,7 @@ class BroadcastCog(commands.Cog):
     ) -> None:
         ids = self._parse_channel_ids(channel_ids)
         if not ids:
-            await interaction.response.send_message("Nepodarilo se rozpoznat zadne ID kanalu.", ephemeral=True)
+            await interaction.response.send_message("Could not recognize any channel IDs.", ephemeral=True)
             return
 
         await interaction.response.defer(thinking=True)
@@ -69,13 +69,13 @@ class BroadcastCog(commands.Cog):
             await asyncio.sleep(SEND_DELAY_SECONDS)
 
         embed = discord.Embed(
-            title="✅ Hromadna zprava odeslana - prace je hotova!",
+            title="✅ Broadcast sent - the job is done!",
             color=discord.Color.green() if not failed else discord.Color.orange(),
         )
-        embed.add_field(name="Uspesne odeslano", value=str(sent), inline=True)
-        embed.add_field(name="Selhalo", value=str(len(failed)), inline=True)
+        embed.add_field(name="Sent successfully", value=str(sent), inline=True)
+        embed.add_field(name="Failed", value=str(len(failed)), inline=True)
         if failed:
-            embed.add_field(name="Nedostupne kanaly", value=", ".join(f"`{c}`" for c in failed), inline=False)
+            embed.add_field(name="Unavailable channels", value=", ".join(f"`{c}`" for c in failed), inline=False)
 
         await interaction.followup.send(embed=embed)
 
@@ -83,7 +83,7 @@ class BroadcastCog(commands.Cog):
     async def on_permission_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
         if isinstance(error, app_commands.MissingPermissions):
             await interaction.response.send_message(
-                "K tomuto prikazu potrebujes opravneni **Manage Guild**.", ephemeral=True
+                "You need the **Manage Guild** permission to use this command.", ephemeral=True
             )
         else:
             raise error

@@ -1,4 +1,4 @@
-"""Sledovani bezicich uloh (repost historie kanalu) pro /repost-status a /repost-stop."""
+"""Tracking of running history repost jobs for /repost-status and /repost-stop."""
 from __future__ import annotations
 
 import asyncio

@@ -93,7 +93,13 @@ bot is also a member of). From that point on, the bot automatically
 forwards **every new** message (text, photo, video, attachment) from the
 source to the target, with no further action needed.
 
-### b) Bulk history repost (repost-history)
+### b) Bulk history repost (repost-history) — optional, off by default
+
+Since 0.0.1 this mode is **disabled by default**, so the bot only forwards
+messages posted going forward. To turn it on, set
+`ENABLE_HISTORY_REPOST=true` and restart the bot; the three commands below
+are then registered again. While it is off, `/repost-history`,
+`/repost-status` and `/repost-stop` do not exist in Discord.
 
 With `/repost-history`, the bot walks through the **entire existing
 history** of a given channel (or only the last N messages, if a limit is
@@ -120,10 +126,12 @@ sending a large number of messages or attachments.
 
 All commands are implemented as **slash commands** (`/...`).
 Commands marked with 🔒 require the **Manage Guild** permission.
+The three `/repost-*` commands are only available when
+`ENABLE_HISTORY_REPOST=true` (see section 3b).
 
 | Command | Description |
 |---|---|
-| 🔒 `/link-add source:#channel target_channel_id:ID` | Enables live forwarding of new messages from the source channel to the target channel (even on a different server). |
+| 🔒 `/link-add source:#channel target_channel_id:ID` | Enables live forwarding of new messages from the source channel to the target channel (even on a different server). Only messages posted after the link is created are forwarded; history is not copied. |
 | 🔒 `/link-remove source:#channel` | Disables live forwarding for the given source channel. |
 | `/link-list` | Lists all active links for the current server. |
 | 🔒 `/repost-history source:#channel target_channel_id:ID [limit]` | Reposts message history (all, or the last `limit` messages) into the target channel. Shows live and final status updates. |
@@ -217,6 +225,8 @@ Channel ID"). The bot must be a member of the target server with the
   boost level (typically 25 MB, more for boosted servers). If an
   attachment doesn't fit in the target channel, the bot sends the message
   text without it and adds a note that the attachment was too large.
+- Live forwarding only handles messages created after the link was made.
+  Messages posted before the link exists are never copied.
 - Both live forwarding and bulk history repost send messages under the
   original author's name and avatar via a webhook — so it's technically a
   copy, not a true Discord "forward", but it visually and content-wise
@@ -285,6 +295,7 @@ and opens no ports.
 |---|---|---|
 | `DISCORD_TOKEN` | Yes | Bot token from the Discord Developer Portal. The container exits immediately if this is empty. |
 | `DEV_GUILD_ID` | No | When set, slash commands sync instantly to just this server. Leave empty for global sync (can take up to about an hour). |
+| `ENABLE_HISTORY_REPOST` | No | Default `false`. Set to `true` to register the bulk history commands (`/repost-history`, `/repost-status`, `/repost-stop`). Leave off to forward only messages posted going forward. |
 | `TZ` | No | Container timezone, used for log timestamps. |
 
 Channel links are stored in `/app/data/links.json` inside the mounted

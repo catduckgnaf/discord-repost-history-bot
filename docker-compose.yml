@@ -9,6 +9,9 @@ services:
       # Optional. When set, slash commands sync instantly to just this
       # server. Leave empty for global sync (can take up to about an hour).
       DEV_GUILD_ID: "${DEV_GUILD_ID:-}"
+      # Optional. Set to "true" to register /repost-history, /repost-status
+      # and /repost-stop. Off by default (live forwarding only).
+      ENABLE_HISTORY_REPOST: "${ENABLE_HISTORY_REPOST:-false}"
       TZ: "${TZ:-America/New_York}"
     volumes:
       # Stores data/links.json (channel links). Must be writable by
